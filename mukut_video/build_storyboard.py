@@ -78,7 +78,7 @@ fl.append({"t": round(T(62), 2), "strength": .6, "decay": .25, "color": [1, .85,
 for t in (168.34, 170.31, 171.91, 174.3): fl.append({"t": t, "strength": .35, "decay": .22, "color": [1, .1, .12]})  # heartbeat
 fl += [{"t": 236.39, "strength": .35, "decay": .3, "color": [1, .9, .7]}, {"t": 242.25, "strength": .7, "decay": .45, "color": [1, .9, .7]}]
 exposure = [[0, 0], [2.0, 1], [150, 1], [153, .88], [168, .88], [170.5, .5], [174.6, .5], [177.0, 1], [244, 1], [247.6, 0], [248.4, 0]]
-sb = {"timed": True, "size": [W, H], "fps": FPS, "audio": "/tmp/t/in.wav", "shots": shots,
+sb = {"timed": True, "size": [W, H], "fps": FPS, "audio": arg("--audio", "/tmp/t/in.wav"), "shots": shots,
       "overlays": {"pulses": pulses, "flashes": fl, "exposure": exposure, "captions": caps,
                    "font_bn": "/usr/share/fonts/truetype/freefont/FreeSans.ttf", "font_en": "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
                    "size_bn": .056, "size_en": .032, "y": .79}}

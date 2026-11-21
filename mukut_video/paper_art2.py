@@ -151,7 +151,8 @@ def a5():  # layered night city + river reflection
     for i, (y0, cols, lit) in enumerate(((600, [(46, 40, 96), (54, 44, 108)], .25), (690, [(28, 26, 66), (34, 30, 74)], .4), (780, [(14, 14, 36), (18, 18, 44)], .55))):
         skyline(P, y0, 0, cols, 120 + i * 40, 380 + i * 60, True, lit, 10 + i)
     P.put(poly([(0, 850), (W, 850), (W, H), (0, H)]), grad((20, 20, 50), (6, 6, 16), 850, H), 0)
-    for _ in range(40): x = rng.uniform(0, W); P.put(rect(x, 870 + rng.uniform(0, 160), x + rng.uniform(40, 160), 880 + rng.uniform(0, 160), 3), (255, 200, 110), 0)
+    for _ in range(40):
+        x, y = rng.uniform(0, W), 870 + rng.uniform(0, 160); P.put(rect(x, y, x + rng.uniform(40, 160), y + 10, 3), (255, 200, 110), 0)
     return P.finish()
 def a6():  # road to horizon, dawn
     P = Paper((60, 30, 100), (255, 170, 80), 0, 700); P.put(circ(960, 640, 150), (255, 230, 160), .5); sunrays(P, 960, 640, 160, 900, 28, (255, 200, 110), (255, 150, 90))
