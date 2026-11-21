@@ -11,6 +11,7 @@ from PIL import Image, ImageFilter, ImageDraw, ImageFont
 from concurrent.futures import ProcessPoolExecutor
 
 SS = 1.6  # supersample factor of the working image (sharper zooms)
+PULSES = []  # [(time_s, amplitude)] camera zoom pulses (kicks/downbeats); set by timed storyboards
 
 
 def ease(t, kind="inout"):
@@ -70,7 +71,7 @@ class Shot:
     def __init__(self, d, W, H, fps, base):
         self.d, self.W, self.H = d, W, H
         self.dur = float(d.get("duration", 4))
-        self.n = max(2, round(self.dur * fps))
+        self.n = d.get("_n") or max(2, round(self.dur * fps))
         self.path = d["image"] if os.path.isabs(d["image"]) else os.path.join(base, d["image"])
         self._img = None
         self.cam = d.get("camera", {})
@@ -92,20 +93,20 @@ class Shot:
         return self._img
 
     # ---- frame ------------------------------------------------------------------
-    def frame(self, i):
+    def frame(self, i, gt=None):
         T = i / (self.n - 1)
-        if i < self.clip_n:
+        if self.clip_n and i < self.clip_n:
             fr = Image.open(os.path.join(self.clipdir, f"{i + 1:04d}.jpg")).convert("RGB")
             return self.caption(fr, T)
         j = i - self.clip_n; sn = self.n - self.clip_n
-        fr = self.still(j / max(1, sn - 1))
+        fr = self.still(j / max(1, sn - 1), gt)
         if self.clip_n and j < self.blend_n:
             if self._last is None:
                 self._last = Image.open(os.path.join(self.clipdir, f"{self.clip_n:04d}.jpg")).convert("RGB")
             fr = Image.blend(self._last, fr, ease((j + 1) / (self.blend_n + 1)))
         return self.caption(fr, T)
 
-    def still(self, t):
+    def still(self, t, gt=None):
         c, W, H = self.cam, self.W, self.H
         e = ease(t, self.ease)
         ze = c.get("zoom", [1.0, 1.15])
@@ -125,6 +126,8 @@ class Shot:
             cx = iw / 2 + lerp(*px, e) * (iw - vw) / 2 * .9
             cy = ih / 2 + lerp(*py, e) * (ih - vh) / 2 * .9
             amt = 1.0
+        if gt is not None and PULSES:  # zoom pulse on beats: sharp attack, ~0.25 s decay
+            z *= 1 + sum(a * math.exp(-(gt - tp) / 0.22) for tp, a in PULSES if 0 <= gt - tp < 1.2)
         vw, vh = view(z)
         sh = c.get("shake", 0.0)
         if sh:  # handheld shake in output pixels
@@ -241,8 +244,78 @@ def make_plan(sb, fps):
     return plan
 
 
+def make_plan_timed(sb, fps):
+    """Shots own [t0,t1); each transition is centred on the cut time (so impacts land on the beat)."""
+    shots = sb["shots"]; b = [round(s["t0"] * fps) for s in shots] + [round(shots[-1]["t1"] * fps)]
+    tn = [0 if i + 1 >= len(shots) else round(shots[i].get("transition", {}).get("duration", 0) * fps) for i in range(len(shots))]
+    for i, s in enumerate(shots): s["_n"] = max(2, b[i + 1] - b[i])
+    plan = []
+    for g in range(b[-1]):
+        hit = None
+        for m in range(len(shots) - 1):
+            h = tn[m] // 2
+            if tn[m] and b[m + 1] - h <= g < b[m + 1] + tn[m] - h:
+                hit = (m, g - (b[m + 1] - h)); break
+        if hit:
+            m, j = hit
+            plan.append(("T", g, m, g - b[m], g - b[m + 1], j, tn[m], shots[m]["transition"]["type"]))
+        else:
+            k = max(i for i in range(len(shots)) if b[i] <= g)
+            plan.append(("S", g, k, g - b[k]))
+    return plan
+
+
+_FONTS = {}
+def _font(path, size):
+    if (path, size) not in _FONTS:
+        _FONTS[(path, size)] = ImageFont.truetype(path, size, layout_engine=ImageFont.Layout.RAQM)
+    return _FONTS[(path, size)]
+
+
+def overlay(arr, gt, ov, W, H):
+    """Global post effects: exposure curve, flashes, timed captions."""
+    a = arr.astype(np.float32)
+    keys = ov.get("exposure")
+    if keys:
+        ts = [k[0] for k in keys]; vs = [k[1] for k in keys]
+        a = a * float(np.interp(gt, ts, vs))
+    for fl in ov.get("flashes", []):
+        dt = gt - fl["t"]
+        if 0 <= dt < fl.get("decay", 0.3) * 6:
+            a = a + 255 * fl.get("strength", .5) * math.exp(-dt / fl.get("decay", .3)) * np.array(fl.get("color", [1, 1, 1]), np.float32)
+    caps = [c for c in ov.get("captions", []) if c["t0"] <= gt < c["t1"]]
+    if not caps: return np.clip(a, 0, 255)
+    im = Image.fromarray(np.clip(a, 0, 255).astype(np.uint8)).convert("RGBA")
+    layer = Image.new("RGBA", im.size, (0, 0, 0, 0)); d = ImageDraw.Draw(layer)
+    for c in caps:
+        al = min(1, (gt - c["t0"]) / 0.15) * min(1, (c["t1"] - gt) / 0.12)
+        if al <= 0: continue
+        fb = _font(ov["font_bn"], int(ov.get("size_bn", 0.058) * H)); fe = _font(ov["font_en"], int(ov.get("size_en", 0.034) * H))
+        y = ov.get("y", 0.80) * H
+        for text, fnt, col, dy in ((c.get("bn"), fb, (255, 255, 255), 0), (c.get("en"), fe, (255, 214, 140), fb.size * 1.28)):
+            if not text: continue
+            # wrap
+            words, lines, cur = text.split(), [], ""
+            for w in words:
+                if d.textlength((cur + " " + w).strip(), font=fnt) > W * 0.86 and cur: lines.append(cur); cur = w
+                else: cur = (cur + " " + w).strip()
+            lines.append(cur)
+            for ln in lines:
+                x = (W - d.textlength(ln, font=fnt)) / 2
+                d.text((x, y + dy), ln, font=fnt, fill=col + (int(255 * al),), stroke_width=max(2, fnt.size // 14),
+                       stroke_fill=(0, 0, 0, int(220 * al)))
+                if fnt is fb and ov.get("thicken", True):  # FreeSans has no Bengali bold: fatten the regular weight
+                    d.text((x, y + dy), ln, font=fnt, fill=col + (int(255 * al),), stroke_width=1,
+                           stroke_fill=col + (int(255 * al),))
+                dy += fnt.size * 1.22
+    return np.asarray(Image.alpha_composite(im, layer).convert("RGB"), np.float32)
+
+
 def render_chunk(args):
     sb, base, plan, out, W, H, fps = args
+    global PULSES
+    PULSES = [tuple(p) for p in sb.get("overlays", {}).get("pulses", [])]
+    ov = sb.get("overlays", {})
     shots = {}
     def S(i):
         if i not in shots: shots[i] = Shot(sb["shots"][i], W, H, fps, base)
@@ -254,9 +327,14 @@ def render_chunk(args):
     for p in plan:
         if p[0] == "s":
             arr = np.asarray(S(p[1]).frame(p[2]))
-        else:
+        elif p[0] == "t":
             _, idx, i, j, tn, kind = p
             arr = blend(S(idx).frame(i), S(idx + 1).frame(j), (j + 1) / (tn + 1), kind)
+        elif p[0] == "S":
+            _, g, k, i = p; arr = overlay(np.asarray(S(k).frame(i, g / fps)), g / fps, ov, W, H)
+        else:
+            _, g, m, i, i2, j, tn, kind = p
+            arr = overlay(blend(S(m).frame(i, g / fps), S(m + 1).frame(i2, g / fps), (j + 1) / (tn + 1), kind), g / fps, ov, W, H)
         pr.stdin.write(np.clip(arr, 0, 255).astype(np.uint8).tobytes())
     pr.stdin.close(); pr.wait()
     return out
@@ -283,7 +361,7 @@ def main(sb_path, out, workers):
     W, H = sb.get("size", [720, 1280]); fps = sb.get("fps", 30)
     cache = os.path.abspath(out) + ".cache"; os.makedirs(cache, exist_ok=True)
     prepare_clips(sb, base, W, H, fps, cache)
-    plan = make_plan(sb, fps)
+    plan = make_plan_timed(sb, fps) if sb.get("timed") else make_plan(sb, fps)
     k = max(1, workers); size = math.ceil(len(plan) / k)
     jobs = [(sb, base, plan[a:a + size], os.path.join(cache, f"part{a // size:02d}.mp4"), W, H, fps)
             for a in range(0, len(plan), size)]
