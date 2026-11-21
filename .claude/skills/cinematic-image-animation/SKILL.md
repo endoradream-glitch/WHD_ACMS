@@ -17,7 +17,7 @@ transition into the next shot. No video-gen model needed.
 2. **Generate images in Google Flow (free).** Open labs.google/fx/tools/flow (or Whisk/ImageFX), aspect **9:16**, follow [references/flow-prompts.md](references/flow-prompts.md) for style-locked prompts. Download at the highest resolution (≥1080x1920). Name them `01.png, 02.png...`. This step is manual: Flow has no public API and needs the user's Google login; ask the user to upload the images into the working directory.
    - If the user has no images yet, hand them the numbered prompt list and stop; do not substitute placeholder art.
 3. **Write `storyboard.json`** (schema below; working example: `references/example-storyboard.json`).
-4. **Render:** `python3 scripts/animate.py storyboard.json out.mp4` (needs Pillow, numpy, ffmpeg; ~10 fps rendering at 540x960, set `size` to `[1080,1920]` for final).
+4. **Render:** `python3 scripts/animate.py storyboard.json out.mp4 [--workers N]` (needs Pillow, numpy, ffmpeg). Frames render in parallel chunks, one per CPU core by default. Preview at `size` `[540,960]`; use `[1080,1920]` for final (~15 min for 2.5 min of video on 4 cores).
 5. **Review frames,** not just the file: `ffmpeg -ss 1.5 -i out.mp4 -frames:v 1 f.png`. Check edges never show, blur isn't muddy, moves are readable. Adjust and re-render.
 6. **Narration (edge-tts):** `pip install edge-tts`; per scene `edge_tts.Communicate(text, "en-US-AndrewNeural", rate="-4%", proxy=os.environ.get("HTTPS_PROXY")).save("NN.mp3")` (the explicit `proxy=` is required in sandboxes; host `speech.platform.bing.com` must be allowed). Measure each clip with ffprobe, set `duration = audio + ~1.0 s (+ transition)`, then place clips with ffmpeg `adelay` at each shot's start (start_i = sum of earlier durations minus their transition overlaps) and mix to one file.
 7. Optional: add music with `"audio": "track.mp3"` (trimmed to video length).
@@ -27,6 +27,7 @@ transition into the next shot. No video-gen model needed.
 ```json
 {"size":[1080,1920],"fps":30,"audio":"optional.mp3","shots":[{
   "image":"01.png","duration":4,
+  "intro_clip":"clips/01.mp4",
   "camera":{"zoom":[1,1.25],"pan_x":[-0.5,0.5],"pan_y":[0,0],"roll":[0,1.5],"shake":3,"ease":"inout"},
   "focus":{"mode":"pull_in|pull_out|tiltshift","blur":14,"start":0,"end":0.6,"y":[0.3,0.7]},
   "light":{"exposure":[0.7,1.1],"warmth":[-0.5,0.6],"vignette":0.4,"flicker":0.03,
@@ -35,7 +36,9 @@ transition into the next shot. No video-gen model needed.
   "caption":{"text":"On-screen line","y":0.8,"size":0.042},
   "transition":{"type":"crossfade|whip|zoom|flash|dip_black","duration":0.8}}]}
 ```
-`pan_x/pan_y` are -1..1 of available headroom (images get 1.6x headroom). `transition` on a shot joins it to the *next* shot; frames overlap, so duration is subtracted from total length.
+`zoom` 1 = the full cover-fit image; >1 zooms in. `pan_x/pan_y` are -1..1 of the slack left at the current zoom (pans need zoom >1 on the constrained axis).
+
+**`intro_clip`** (optional): a pre-made clip for the scene (e.g. Flow/Veo paper-layer assembly) that plays first. The renderer matches the clip's last frame to the still (zoom + shift search), then continues the still *from that framing* to the `zoom`/`pan` END values you give (`zoom[0]`, `pan[0]` ignored), crossfading 0.35 s. Focus/light effects fade in after the clip so the handoff stays clean; put `pull_out` focus late (`start` ≥ 0.7). `duration` must exceed the clip length. `transition` on a shot joins it to the *next* shot; frames overlap, so duration is subtracted from total length.
 
 ## Recipe table (look → settings)
 
