@@ -19,7 +19,8 @@ transition into the next shot. No video-gen model needed.
 3. **Write `storyboard.json`** (schema below; working example: `references/example-storyboard.json`).
 4. **Render:** `python3 scripts/animate.py storyboard.json out.mp4` (needs Pillow, numpy, ffmpeg; ~10 fps rendering at 540x960, set `size` to `[1080,1920]` for final).
 5. **Review frames,** not just the file: `ffmpeg -ss 1.5 -i out.mp4 -frames:v 1 f.png`. Check edges never show, blur isn't muddy, moves are readable. Adjust and re-render.
-6. Optional: add music with `"audio": "track.mp3"` (trimmed to video length).
+6. **Narration (edge-tts):** `pip install edge-tts`; per scene `edge_tts.Communicate(text, "en-US-AndrewNeural", rate="-4%", proxy=os.environ.get("HTTPS_PROXY")).save("NN.mp3")` (the explicit `proxy=` is required in sandboxes; host `speech.platform.bing.com` must be allowed). Measure each clip with ffprobe, set `duration = audio + ~1.0 s (+ transition)`, then place clips with ffmpeg `adelay` at each shot's start (start_i = sum of earlier durations minus their transition overlaps) and mix to one file.
+7. Optional: add music with `"audio": "track.mp3"` (trimmed to video length).
 
 ## Storyboard schema
 
@@ -31,6 +32,7 @@ transition into the next shot. No video-gen model needed.
   "light":{"exposure":[0.7,1.1],"warmth":[-0.5,0.6],"vignette":0.4,"flicker":0.03,
            "sweep":{"width":0.15,"strength":0.35,"slant":0.4}},
   "grain":0.03,
+  "caption":{"text":"On-screen line","y":0.8,"size":0.042},
   "transition":{"type":"crossfade|whip|zoom|flash|dip_black","duration":0.8}}]}
 ```
 `pan_x/pan_y` are -1..1 of available headroom (images get 1.6x headroom). `transition` on a shot joins it to the *next* shot; frames overlap, so duration is subtracted from total length.

@@ -56,7 +56,31 @@ class Shot:
         fr = src.transform((self.W, self.H), Image.EXTENT,
                            (cx - vw / 2, cy - vh / 2, cx + vw / 2, cy + vh / 2), Image.BICUBIC)
         fr = self.focus(fr, t)
-        return self.light(fr, t, e)
+        return self.caption(self.light(fr, t, e), t)
+
+    def caption(self, fr, t):
+        c = self.d.get("caption")
+        if not c: return fr
+        from PIL import ImageDraw, ImageFont
+        a = min(1, t / 0.12) * min(1, (1 - t) / 0.08)  # fade in/out
+        if a <= 0: return fr
+        font = ImageFont.truetype(c.get("font", "/usr/share/fonts/opentype/inter/Inter-Bold.otf"),
+                                  int(c.get("size", 0.055) * self.H))
+        d0 = ImageDraw.Draw(fr)
+        words, lines, cur = c["text"].split(), [], ""
+        for w in words:
+            if d0.textlength((cur + " " + w).strip(), font=font) > self.W * 0.86 and cur:
+                lines.append(cur); cur = w
+            else: cur = (cur + " " + w).strip()
+        lines.append(cur)
+        lh = font.size * 1.3
+        y0 = c.get("y", 0.78) * self.H - len(lines) * lh / 2
+        ov = Image.new("RGBA", fr.size, (0, 0, 0, 0)); d = ImageDraw.Draw(ov)
+        for k, ln in enumerate(lines):
+            x = (self.W - d0.textlength(ln, font=font)) / 2
+            d.text((x, y0 + k * lh), ln, font=font, fill=(255, 255, 255, int(255 * a)),
+                   stroke_width=max(2, font.size // 14), stroke_fill=(0, 0, 0, int(200 * a)))
+        return Image.alpha_composite(fr.convert("RGBA"), ov).convert("RGB")
 
     def focus(self, fr, t):
         f = self.d.get("focus")
