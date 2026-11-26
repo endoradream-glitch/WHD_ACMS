@@ -406,7 +406,7 @@
 
   // 8. the nightmare
   function nightmare(ctx, t, u) {
-    const hb = (u % 0.95) / 0.95, beat = Math.exp(-hb * 6) + 0.6 * Math.exp(-Math.abs(hb - 0.28) * 14);
+    const hb = (((u % 0.95) + 0.95) % 0.95) / 0.95, beat = Math.exp(-hb * 6) + 0.6 * Math.exp(-Math.abs(hb - 0.28) * 14);
     sky(ctx, mixc([8, 4, 18], [50, 6, 20], clamp((u - 4) / 8)), [20, 6, 24]);
     const d = S.line('night').dur, awake = sm(d * 0.34, d * 0.55, u), glitch = awake * (0.4 + 0.6 * (h(Math.floor(t * 12)) > 0.55 ? 1 : 0));
     network(ctx, t, { cx: W * 0.42, cy: H * 0.45, R: 360, col: mixc(PURPLE, RED, awake), act: 1.4, ry: -t * 0.3, rx: 0.3, warp: awake * 3, alpha: 0.8 });
