@@ -2,12 +2,12 @@
 const fs = require('fs'), path = require('path');
 const Voice = require('./engine/audio/voice');
 const SCRIPT = require('./script');
-const LEAD = 2.2, RATE = +(process.env.RATE || 135);
-const probe = Voice.speak(SCRIPT.map((l) => ({ at: 0, text: l.tts, voice: l.voice || 'bn', rate: RATE })), { out: 'out', engine: 'espeak-ng', save: false });
+const LEAD = 2.2, RATE = +(process.env.RATE || 150);
+const probe = Voice.speak(SCRIPT.map((l) => ({ at: 0, text: l.tts, voice: l.voice || 'en-us', rate: RATE })), { out: 'out', engine: 'espeak-ng', save: false });
 let t = LEAD;
 const lines = SCRIPT.map((l, i) => {
   const dur = probe.lines[i].end - probe.lines[i].t;
-  const o = { id: l.id, scene: l.scene, at: +t.toFixed(2), dur: +dur.toFixed(2), tts: l.tts, show: l.show, voice: l.voice || 'bn', rate: RATE };
+  const o = { id: l.id, scene: l.scene, at: +t.toFixed(2), dur: +dur.toFixed(2), tts: l.tts, show: l.show, voice: l.voice || 'en-us', rate: RATE };
   t += dur + l.gap; return o;
 });
 const END = t + 1.5, OUTRO = 7;

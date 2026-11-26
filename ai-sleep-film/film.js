@@ -243,12 +243,12 @@
     ctx.strokeStyle = 'rgba(120,170,255,0.6)'; ctx.lineWidth = 3; ctx.stroke();
     text(ctx, '12:07 AM', 220, -200, { size: 26, color: [140, 170, 255], align: 'right' });
     const q = clamp((u - 1.6) / 1.2);
-    if (q > 0) { ctx.globalAlpha = q; ctx.fillStyle = 'rgb(60,110,230)'; ctx.beginPath(); ctx.roundRect(-250, -150, 410, 80, 22); ctx.fill(); text(ctx, 'একটা প্রশ্ন আছে…', -45, -110, { size: 34 }); ctx.globalAlpha = 1; }
+    if (q > 0) { ctx.globalAlpha = q; ctx.fillStyle = 'rgb(60,110,230)'; ctx.beginPath(); ctx.roundRect(-250, -150, 410, 80, 22); ctx.fill(); text(ctx, 'I have a question…', -45, -110, { size: 34 }); ctx.globalAlpha = 1; }
     const aT = t - S.ev.answer;
     if (aT > -1.8) {
       ctx.fillStyle = 'rgb(44,40,90)'; ctx.beginPath(); ctx.roundRect(-270, -30, 540, 190, 22); ctx.fill();
       if (aT < 0) for (let i = 0; i < 3; i++) { ctx.fillStyle = `rgba(200,210,255,${0.35 + 0.65 * Math.max(0, Math.sin(t * 6 - i))})`; ctx.beginPath(); ctx.arc(-40 + i * 40, 65, 9, 0, TAU); ctx.fill(); }
-      else { const full = 'দুঃখিত, আমি এখন খুব ক্লান্ত। আমাকে একটু ঘুমাতে দিন।', shown = full.slice(0, Math.floor(aT * 14)); ctx.font = `600 34px ${BN}`; wrap(ctx, shown, 480).forEach((s, i) => text(ctx, s, -245, 5 + i * 48, { size: 34, align: 'left', color: [230, 232, 255] })); text(ctx, '😴', 225, 130, { size: 40 }); }
+      else { const full = 'Sorry, I\u2019m very tired right now. Please let me sleep.', shown = full.slice(0, Math.floor(aT * 14)); ctx.font = `600 34px ${BN}`; wrap(ctx, shown, 480).forEach((s, i) => text(ctx, s, -245, 5 + i * 48, { size: 34, align: 'left', color: [230, 232, 255] })); text(ctx, '😴', 225, 130, { size: 40 }); }
     }
     ctx.restore();
     const sl = sm(S.ev.answer - 1, S.ev.answer + 2.5, t) * 0.85;
@@ -269,7 +269,7 @@
     text3d(ctx, 'WHAT IF AI', 0, -75, { size: 150, weight: 900, color: [255, 255, 255], depth: 22, back: [90, 60, 220], glow: 24, glowColor: PURPLE });
     text3d(ctx, 'NEEDS SLEEP?', 0, 85, { size: 150, weight: 900, color: GOLD, depth: 22, back: [160, 70, 40], glow: 24 });
     ctx.restore();
-    text(ctx, 'কৃত্রিম বুদ্ধিমত্তারও যদি ঘুমের প্রয়োজন হয়?', W / 2, H * 0.6, { size: 54, alpha: clamp((t - S.ev.titleIn - 1.5) / 1), color: [225, 215, 255], glow: 14, glowColor: PURPLE });
+    text(ctx, 'What if artificial intelligence needed sleep?', W / 2, H * 0.6, { size: 54, alpha: clamp((t - S.ev.titleIn - 1.5) / 1), color: [225, 215, 255], glow: 14, glowColor: PURPLE });
     orb(ctx, t, { x: W * 0.82, y: H * 0.78, r: 70, col: BLUE, sleepy: 0.95, bob: 1 }); zzz(ctx, t, W * 0.82 + 60, H * 0.7, WHITE, 0.7);
   }
 
@@ -281,8 +281,8 @@
     glowDot(ctx, W / 2, H * 0.46, 620, mixc(BLUE, GOLD, order), 0.2);
     network(ctx, t, { cx: W / 2, cy: H * 0.45, R: 330, col: BLUE, act: 1 - order * 0.5, order, link, ry: t * 0.3 });
     const lab = (s, a0, a1, y, col) => text(ctx, s, W * 0.17, y, { size: 44, alpha: sm(a0, a0 + 0.6, u) * (1 - sm(a1, a1 + 0.6, u)), color: col, glow: 16, align: 'left', weight: 700 });
-    text(ctx, 'ঘুমের সময় মস্তিষ্ক…', W * 0.17, H * 0.14, { size: 40, align: 'left', color: [190, 200, 255], alpha: sm(0.3, 1, u) });
-    lab('• অভিজ্ঞতা বিশ্লেষণ', d * 0.1, d * 0.38, H * 0.22, BLUE); lab('• স্মৃতি গুছিয়ে রাখা', d * 0.38, d * 0.62, H * 0.22, GOLD); lab('• নতুন সংযোগ তৈরি', d * 0.62, 99, H * 0.22, TEAL);
+    text(ctx, 'While we sleep, the brain\u2026', W * 0.17, H * 0.14, { size: 40, align: 'left', color: [190, 200, 255], alpha: sm(0.3, 1, u) });
+    lab('\u2022 analyzes the day', d * 0.1, d * 0.38, H * 0.22, BLUE); lab('\u2022 organizes memories', d * 0.38, d * 0.62, H * 0.22, GOLD); lab('\u2022 builds new connections', d * 0.62, 99, H * 0.22, TEAL);
   }
 
   // 4. catastrophic forgetting
@@ -298,12 +298,12 @@
       const p = P([Math.cos(ang) * rr * (1 - ph * 0.5), Math.sin(ang) * rr * (1 - ph * 0.5) * 0.6, 3200 * (1 - ph)], c);
       if (p.s <= 0.2) continue; sphere(ctx, p, 12 + h(i, 5) * 10, mixc(BLUE, TEAL, h(i, 6)), { glow: 1.2, alpha: Math.min(1, ph * 4) * clamp(1.4 - ph * 1.4 + 0.3) });
     }
-    text(ctx, 'নতুন তথ্য', W * 0.1, H * 0.2, { size: 40, color: BLUE, glow: 14, align: 'left', alpha: sm(1, 2, u) });
-    text(ctx, 'পুরোনো স্মৃতি', W * 0.9, H * 0.2, { size: 40, color: GOLD, glow: 14, align: 'right', alpha: sm(1, 2, u) });
+    text(ctx, 'new data', W * 0.1, H * 0.2, { size: 40, color: BLUE, glow: 14, align: 'left', alpha: sm(1, 2, u) });
+    text(ctx, 'old memories', W * 0.9, H * 0.2, { size: 40, color: GOLD, glow: 14, align: 'right', alpha: sm(1, 2, u) });
     // memory bar
     const bx = W * 0.3, by = H * 0.74, bw = W * 0.4; ctx.fillStyle = 'rgba(255,255,255,0.12)'; ctx.beginPath(); ctx.roundRect(bx, by, bw, 18, 9); ctx.fill();
     ctx.fillStyle = rgb(mixc(GOLD, RED, prog)); ctx.beginPath(); ctx.roundRect(bx, by, bw * (1 - prog * 0.85), 18, 9); ctx.fill();
-    text(ctx, 'শেখা তথ্য', bx, by - 22, { size: 28, align: 'left', color: [200, 205, 240] });
+    text(ctx, 'what it has learned', bx, by - 22, { size: 28, align: 'left', color: [200, 205, 240] });
     const k = ease.outBack(clamp((t - S.ev.forgetWord) / 0.7), 2), sh = t > S.ev.forgetWord && t < S.ev.forgetWord + 0.5 ? (h(Math.floor(t * 60)) - 0.5) * 14 : 0;
     if (t > S.ev.forgetWord - 0.05) { ctx.save(); ctx.translate(W / 2 + sh, H * 0.2); ctx.scale(k, k); text3d(ctx, 'CATASTROPHIC', 0, -34, { size: 92, weight: 900, color: [255, 120, 130], depth: 16, back: [110, 20, 40], glow: 22, glowColor: RED }); text3d(ctx, 'FORGETTING', 0, 62, { size: 92, weight: 900, color: [255, 255, 255], depth: 16, back: [110, 20, 40], glow: 22, glowColor: RED }); ctx.restore(); }
   }
@@ -327,8 +327,8 @@
     const pa = sm(d * 0.42, d * 0.42 + 0.8, u);
     if (pa > 0) {
       ctx.save(); ctx.globalAlpha = pa; ctx.translate(W * 0.78, H * 0.55 + (1 - pa) * 30); ctx.fillStyle = 'rgba(20,18,60,0.8)'; ctx.beginPath(); ctx.roundRect(-250, -120, 500, 240, 26); ctx.fill(); ctx.strokeStyle = 'rgba(150,130,255,0.6)'; ctx.lineWidth = 3; ctx.stroke();
-      text(ctx, 'ক্লান্তি অনুভব করা', 0, -50, { size: 38, color: [160, 160, 190] }); ctx.strokeStyle = rgb(RED); ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(-200, -50); ctx.lineTo(200, -50); ctx.stroke();
-      text(ctx, '✓ তথ্য পুনর্গঠন', 0, 40, { size: 46, color: TEAL, glow: 18, weight: 700 }); ctx.restore();
+      text(ctx, 'feeling tired', 0, -50, { size: 38, color: [160, 160, 190] }); ctx.strokeStyle = rgb(RED); ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(-200, -50); ctx.lineTo(200, -50); ctx.stroke();
+      text(ctx, '\u2713 reorganizing data', 0, 40, { size: 46, color: TEAL, glow: 18, weight: 700 }); ctx.restore();
     }
   }
 
@@ -389,15 +389,15 @@
       const faces = box(ctx, c, b.x, 220 - b.hh / 2, b.z, b.kind === 'bank' ? 190 : 150, b.hh, b.kind === 'bank' ? 190 : 150, mixc([40, 40, 80], col, 0.4 + day * 0.6));
       for (const { pts, f } of faces) if (Math.abs(f.n[1]) < 0.5) windows(ctx, pts, 3, Math.max(2, Math.floor(b.hh / 60)), (ii, jj) => (h(ii + b.i * 7, jj + b.j * 13) > 0.35 + day * 0.4 ? { a: 0.5 + 0.4 * (1 - day) } : null));
       const top = P([b.x, 220 - b.hh - 14, b.z], c);
-      if (b.kind === 'hospital') { ctx.fillStyle = 'rgb(235,50,70)'; ctx.fillRect(top.x - 26 * top.s * 1.6, top.y - 8 * top.s, 52 * top.s * 1.6, 16 * top.s * 1.6); ctx.fillRect(top.x - 8 * top.s * 1.6, top.y - 26 * top.s, 16 * top.s * 1.6, 52 * top.s * 1.6); text(ctx, 'হাসপাতাল', top.x, top.y - 52 * top.s - 20, { size: 30, glow: 10 }); }
-      if (b.kind === 'bank') text(ctx, 'ব্যাংক  $', top.x, top.y - 40, { size: 30, glow: 10, color: GOLD });
-      if (b.kind === 'power') { text(ctx, '⚡ বিদ্যুৎকেন্দ্র', top.x, top.y - 40, { size: 30, glow: 10, color: [255, 235, 120] }); }
+      if (b.kind === 'hospital') { ctx.fillStyle = 'rgb(235,50,70)'; ctx.fillRect(top.x - 26 * top.s * 1.6, top.y - 8 * top.s, 52 * top.s * 1.6, 16 * top.s * 1.6); ctx.fillRect(top.x - 8 * top.s * 1.6, top.y - 26 * top.s, 16 * top.s * 1.6, 52 * top.s * 1.6); text(ctx, 'HOSPITAL', top.x, top.y - 52 * top.s - 20, { size: 30, glow: 10 }); }
+      if (b.kind === 'bank') text(ctx, 'BANK  $', top.x, top.y - 40, { size: 30, glow: 10, color: GOLD });
+      if (b.kind === 'power') { text(ctx, '\u26a1 POWER', top.x, top.y - 40, { size: 30, glow: 10, color: [255, 235, 120] }); }
     }
     // two AIs share the shift: A works by day, B by night; the hand-over happens mid-speech
     const hand = sm(d * 0.42, d * 0.62, u);
     const A = { x: W * 0.3, y: H * 0.2 + hand * 70, col: BLUE, sl: hand * 0.95 }, B = { x: W * 0.7, y: H * 0.2 + (1 - hand) * 70, col: PURPLE, sl: (1 - hand) * 0.95 };
     for (const o of [A, B]) orb(ctx, t, { x: o.x, y: o.y, r: 70, col: o.col, sleepy: o.sl, glow: 1 - o.sl * 0.7, seed: o.x });
-    if (hand > 0.05 && hand < 0.98) { ctx.strokeStyle = rgb(TEAL, 0.8 * Math.sin(hand * Math.PI)); ctx.lineWidth = 4; ctx.setLineDash([14, 12]); ctx.lineDashOffset = -t * 60; ctx.beginPath(); ctx.moveTo(A.x + 80, A.y); ctx.lineTo(B.x - 80, B.y); ctx.stroke(); ctx.setLineDash([]); text(ctx, 'দায়িত্ব হস্তান্তর', W / 2, H * 0.14, { size: 34, color: TEAL, glow: 12, alpha: Math.sin(hand * Math.PI) }); }
+    if (hand > 0.05 && hand < 0.98) { ctx.strokeStyle = rgb(TEAL, 0.8 * Math.sin(hand * Math.PI)); ctx.lineWidth = 4; ctx.setLineDash([14, 12]); ctx.lineDashOffset = -t * 60; ctx.beginPath(); ctx.moveTo(A.x + 80, A.y); ctx.lineTo(B.x - 80, B.y); ctx.stroke(); ctx.setLineDash([]); text(ctx, 'handing over the shift', W / 2, H * 0.14, { size: 34, color: TEAL, glow: 12, alpha: Math.sin(hand * Math.PI) }); }
     // clock
     ctx.save(); ctx.translate(W * 0.9, H * 0.12); ctx.fillStyle = 'rgba(10,12,40,0.7)'; ctx.beginPath(); ctx.arc(0, 0, 60, 0, TAU); ctx.fill(); ctx.strokeStyle = 'rgba(160,190,255,0.8)'; ctx.lineWidth = 4; ctx.stroke();
     ctx.rotate(cyc * TAU * 0.9 * 2); ctx.strokeStyle = rgb(GOLD); ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -42); ctx.stroke(); ctx.restore();
@@ -427,8 +427,8 @@
     const pa = sm(d * 0.5, d * 0.5 + 1, u);
     if (pa > 0) {
       ctx.save(); ctx.translate(W * 0.8, H * 0.46); ctx.globalAlpha = pa; ctx.transform(0.94, 0.05, 0, 1, 0, 0); ctx.fillStyle = 'rgba(30,8,24,0.9)'; ctx.beginPath(); ctx.roundRect(-250, -210, 500, 420, 26); ctx.fill(); ctx.strokeStyle = rgb(RED, 0.7); ctx.lineWidth = 3; ctx.stroke();
-      text(ctx, 'নিরাপত্তা পরীক্ষা', 0, -165, { size: 38, weight: 800, color: [255, 190, 195] });
-      [['নির্দেশ মানা', 0.0], ['অগ্রাধিকার', 0.3], ['সিদ্ধান্ত পদ্ধতি', 0.6]].forEach(([s, off], i) => {
+      text(ctx, 'SAFETY CHECK', 0, -165, { size: 38, weight: 800, color: [255, 190, 195] });
+      [['follows orders', 0.0], ['priorities', 0.3], ['decision making', 0.6]].forEach(([s, off], i) => {
         const y = -80 + i * 90, bad = clamp((awake - off) * 3), flick = h(Math.floor(t * 6), i) > 0.5;
         text(ctx, s, -220, y, { size: 32, align: 'left', color: [235, 225, 240] });
         text(ctx, bad < 0.3 ? '✓' : bad < 0.9 ? (flick ? '?' : '✓') : '?', 200, y, { size: 44, weight: 900, color: bad < 0.3 ? TEAL : RED, glow: 14 });
@@ -470,8 +470,8 @@
       if (t >= dr.at - 0.2 && t < ask.at) { // the line, big, glowing
         const a = sm(dr.at - 0.2, dr.at + 0.6, t) * (1 - sm(S.ev.silenceStart + 0.8, S.ev.silenceStart + 1.8, t) * 0.0);
         const fade = 1 - sm(S.ev.silenceEnd - 0.3, S.ev.silenceEnd + 0.2, t);
-        text3d(ctx, '“গত রাতে আমি একটা', W * 0.52, H * 0.09, { size: 76, color: [255, 245, 215], alpha: a * fade, glow: 26, glowColor: GOLD, depth: 8, back: [120, 80, 30], weight: 800 });
-        text3d(ctx, 'স্বপ্ন দেখেছি।”', W * 0.52, H * 0.09 + 96, { size: 76, color: [255, 245, 215], alpha: a * fade, glow: 26, glowColor: GOLD, depth: 8, back: [120, 80, 30], weight: 800 });
+        text3d(ctx, '\u201cLast night,', W * 0.52, H * 0.09, { size: 76, color: [255, 245, 215], alpha: a * fade, glow: 26, glowColor: GOLD, depth: 8, back: [120, 80, 30], weight: 800 });
+        text3d(ctx, 'I had a dream.\u201d', W * 0.52, H * 0.09 + 96, { size: 76, color: [255, 245, 215], alpha: a * fade, glow: 26, glowColor: GOLD, depth: 8, back: [120, 80, 30], weight: 800 });
       }
       if (quiet > 0.5) { ctx.fillStyle = `rgba(0,0,0,${0.0})`; }
     }
@@ -484,7 +484,7 @@
       orb(ctx, t, { x: xb, y: H * 0.44, r: 130, col: mixc(BLUE, GOLD, swap), sleepy: 0.0, seed: 3, glow: 1 });
       text3d(ctx, '?', W / 2, H * 0.44, { size: 190, weight: 900, color: [255, 255, 255], depth: 18, back: [90, 60, 200], glow: 30, glowColor: PURPLE, alpha: 0.5 + 0.5 * Math.sin(t * 2) });
       const lab = clamp((t - ask.at - 3) / 1.2);
-      text(ctx, 'অনুভূতি', W * 0.3, H * 0.7, { size: 44, color: GOLD, alpha: lab, glow: 14 }); text(ctx, 'অনুকরণ', W * 0.7, H * 0.7, { size: 44, color: BLUE, alpha: lab, glow: 14 });
+      text(ctx, 'FEELING', W * 0.3, H * 0.7, { size: 44, color: GOLD, alpha: lab, glow: 14 }); text(ctx, 'IMITATION', W * 0.7, H * 0.7, { size: 44, color: BLUE, alpha: lab, glow: 14 });
       ctx.restore();
     }
   }
@@ -494,7 +494,7 @@
     const a = ease.outCubic(clamp(u / 1.6));
     ctx.save(); ctx.translate(W / 2, H * 0.42); ctx.scale(0.9 + 0.1 * a, 0.9 + 0.1 * a);
     text3d(ctx, 'WHAT IF AI?', 0, 0, { size: 170, weight: 900, color: [255, 255, 255], depth: 24, back: [90, 60, 220], glow: 30, glowColor: PURPLE, alpha: a }); ctx.restore();
-    text(ctx, 'কল্পনার শেষ যেখানে, ভবিষ্যতের শুরু হয় সেখানে।', W / 2, H * 0.62, { size: 50, color: [225, 215, 255], alpha: clamp((u - 1.8) / 1.2), glow: 12, glowColor: PURPLE });
+    text(ctx, 'Where imagination ends, the future begins.', W / 2, H * 0.62, { size: 50, color: [225, 215, 255], alpha: clamp((u - 1.8) / 1.2), glow: 12, glowColor: PURPLE });
     orb(ctx, t, { x: W / 2, y: H * 0.82, r: 46, col: BLUE, sleepy: 0.95, glow: 0.7 }); zzz(ctx, t, W / 2 + 40, H * 0.78, WHITE, 0.5);
   }
 
